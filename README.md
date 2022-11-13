@@ -5,6 +5,12 @@ The requirements are:
 - CMake 3.18 or better, higher version always recommended.
 - A C++17 compatible compiler
 
+Create build folder:
+
+```bash
+rm -r build && mkdir build
+```
+
 To configure:
 
 ```bash
@@ -34,5 +40,3 @@ To build docs (requires Doxygen, output in `build/docs/html`):
 ```bash
 cmake --build build --target docs
 ```
-
-
