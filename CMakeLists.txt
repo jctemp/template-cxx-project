@@ -52,7 +52,7 @@ if(${BUILD_DOCUMENTATION} AND CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
     # - STYLESHEET of the html
     generate_docs(
         TARGET "docs"
-        "./libname" "./README.md"
+        SOURCES "./libname" "./README.md"
     )
 endif(${BUILD_DOCUMENTATION} AND CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
 

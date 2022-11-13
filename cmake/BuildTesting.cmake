@@ -51,12 +51,16 @@ function(generate_testing)
         message(STATUS "-- Tests has not dependencies specified. (Key: DEPENDENCIES)")
     endif(NOT DEFINED ${PREFIX}_DEPENDENCIES)
 
+    if(${PROJECT_ENABLE_TESTING})
+        # must be in here to remove warning
+        list(APPEND ${PREFIX}_DEPENDENCIES doctest::doctest)
+    endif()
+
     message(STATUS "-- Prepare test target.")
 
     set(TEST_NAME "test_${${PREFIX}_TARGET}")
     add_executable(${TEST_NAME} ${${PREFIX}_SOURCES})
-    target_link_libraries(${TEST_NAME} PRIVATE
-        doctest::doctest ${${PREFIX}_DEPENDENCIES})
+    target_link_libraries(${TEST_NAME} PRIVATE ${${PREFIX}_DEPENDENCIES})
     target_compile_definitions(${TEST_NAME} PRIVATE DOCTEST_GUARD_FOR_SRC)
 
     message(STATUS "-- Register test for ctest.")

@@ -5,6 +5,8 @@ function(initialise_docs)
         return()
     endif()
 
+    message(STATUS "Initialising doxygen.")
+
     find_package(Doxygen)
 
     if(NOT DOXYGEN_FOUND)
@@ -27,50 +29,64 @@ function(generate_docs)
         return()
     endif()
 
-    if(NOT ${DOXYGEN_FOUND})
-        message(WARNING "Doxygen need to be installed to generate documentation.")
-        return()
-    endif()
-
     message(STATUS "Generate documentation target.")
 
     set(PREFIX DOCS)
-    set(OPTIONS_ARGS STYLESHEET OUTPUT_DIRECTORY)
-    set(VALUE_ARGS TARGET)
+    set(OPTIONS_ARGS)
+    set(VALUE_ARGS TARGET OUTPUT_DIRECTORY STYLESHEET)
     set(MULTIVALUE_ARGS SOURCES)
     cmake_parse_arguments(${PREFIX} "${OPTIONS_ARGS}" "${VALUE_ARGS}"
         "${MULTIVALUE_ARGS}" ${ARGN})
 
-    if(NOT DEFINED DOCS_TARGET)
+    if(NOT DEFINED ${PREFIX}_TARGET)
         message(WARNING "-- Docs Target is missing a name. (Key: TARGET)")
         return()
     endif()
 
-    if(NOT DEFINED DOCS_SOURCES)
+    if(NOT DEFINED ${PREFIX}_SOURCES)
         message(WARNING "-- Input files are undefined. (Key: SOURCES)")
         return()
     endif()
 
-    if(DEFINED DOCS_OUTPUT_DIRECTORY)
-        set(DOXYGEN_OUTPUT_DIRECTORY ${DOCS_OUTPUT_DIRECTORY})
+    if(DEFINED ${PREFIX}_OUTPUT_DIRECTORY)
+        set(DOXYGEN_OUTPUT_DIRECTORY ${${PREFIX}_OUTPUT_DIRECTORY})
     else()
         set(DOXYGEN_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/docs)
     endif()
 
     message(STATUS "-- Documentation output directory: ${DOXYGEN_OUTPUT_DIRECTORY}")
 
-    if(DEFINED DOCS_STYLESHEET AND EXISTS ${DOCS_STYLESHEET})
-        set(DOXYGEN_HTML_EXTRA_STYLESHEET ${DOCS_STYLESHEET})
+    if(DEFINED ${PREFIX}_STYLESHEET AND EXISTS ${${PREFIX}_STYLESHEET})
+        set(DOXYGEN_HTML_EXTRA_STYLESHEET ${${PREFIX}_STYLESHEET})
     else()
+        set(DOXYGEN_STYLES_PATH ${CMAKE_CURRENT_BINARY_DIR}/doxygen-awesome-css)
+
+        if(NOT EXISTS ${DOXYGEN_STYLES_PATH})
+            find_package(Git QUIET)
+
+            if(NOT Git_FOUND)
+                message(FATAL_ERROR "Cannot find git for dependencies.")
+            endif(NOT Git_FOUND)
+
+            message(STATUS "-- Clone dependencies")
+            execute_process(
+                COMMAND ${GIT_EXECUTABLE} clone "https://github.com/jothepro/doxygen-awesome-css.git"
+                WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+                RESULT_VARIABLE GIT_CLONE_RESULT)
+
+            if(NOT GIT_CLONE_RESULT EQUAL "0")
+                message(FATAL_ERROR "git failed with: ${GIT_CLONE_RESULT}")
+            endif(NOT GIT_CLONE_RESULT EQUAL "0")
+        endif(NOT EXISTS ${DOXYGEN_STYLES_PATH})
+
+        message(STATUS "-- Set doxygen variables")
         set(DOXYGEN_HTML_EXTRA_STYLESHEET
-            ${CMAKE_CURRENT_SOURCE_DIR}/Doxyfile.css
-            ${CMAKE_CURRENT_SOURCE_DIR}/DoxyfileSidebar.css)
+            ${DOXYGEN_STYLES_PATH}/doxygen-awesome.css
+            ${DOXYGEN_STYLES_PATH}/doxygen-awesome-sidebar-only.css)
         set(DOXYGEN_DISABLE_INDEX NO)
         set(DOXYGEN_GENERATE_TREEVIEW YES)
         set(DOXYGEN_FULL_SIDEBAR NO)
     endif()
 
-    message(STATUS "-- Applying following CSS: ${DOXYGEN_HTML_EXTRA_STYLESHEET}")
-
-    doxygen_add_docs(${DOCS_TARGET} ${DOCS_SOURCES})
+    doxygen_add_docs(${${PREFIX}_TARGET} ${${PREFIX}_SOURCES})
 endfunction(generate_docs)
